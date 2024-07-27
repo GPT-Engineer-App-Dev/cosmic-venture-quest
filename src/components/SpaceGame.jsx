@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
-import { Stars, useTexture } from '@react-three/drei'
-import { Vector3, TextureLoader } from 'three'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Stars } from '@react-three/drei'
+import { Vector3 } from 'three'
 import * as THREE from 'three'
 
 function Spaceship({ position, rotation }) {
@@ -26,11 +26,23 @@ function Spaceship({ position, rotation }) {
 }
 
 function Planet({ position, color, size }) {
-  const texture = useTexture('/planet_texture.jpg')
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'black');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(canvas);
+  }, [color]);
+
   return (
     <mesh position={position}>
       <sphereGeometry args={[size, 64, 64]} />
-      <meshStandardMaterial map={texture} color={color} />
+      <meshStandardMaterial map={texture} />
     </mesh>
   )
 }
