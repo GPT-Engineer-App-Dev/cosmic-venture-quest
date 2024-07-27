@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, Text } from '@react-three/drei'
 import { Vector3 } from 'three'
@@ -35,14 +35,39 @@ function Planet({ position, color, size }) {
 
 function PlayerSpaceship() {
   const [position, setPosition] = useState([0, 0, 0])
+  const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false })
   const speed = 0.1
   const { camera } = useThree()
 
-  useFrame((state, delta) => {
-    if (state.keyboard.forward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] - speed))
-    if (state.keyboard.backward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] + speed))
-    if (state.keyboard.left) setPosition(prev => new Vector3(prev[0] - speed, prev[1], prev[2]))
-    if (state.keyboard.right) setPosition(prev => new Vector3(prev[0] + speed, prev[1], prev[2]))
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowUp') setKeys((keys) => ({ ...keys, forward: true }))
+      if (event.key === 'ArrowDown') setKeys((keys) => ({ ...keys, backward: true }))
+      if (event.key === 'ArrowLeft') setKeys((keys) => ({ ...keys, left: true }))
+      if (event.key === 'ArrowRight') setKeys((keys) => ({ ...keys, right: true }))
+    }
+
+    const handleKeyUp = (event) => {
+      if (event.key === 'ArrowUp') setKeys((keys) => ({ ...keys, forward: false }))
+      if (event.key === 'ArrowDown') setKeys((keys) => ({ ...keys, backward: false }))
+      if (event.key === 'ArrowLeft') setKeys((keys) => ({ ...keys, left: false }))
+      if (event.key === 'ArrowRight') setKeys((keys) => ({ ...keys, right: false }))
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+
+  useFrame(() => {
+    if (keys.forward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] - speed))
+    if (keys.backward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] + speed))
+    if (keys.left) setPosition(prev => new Vector3(prev[0] - speed, prev[1], prev[2]))
+    if (keys.right) setPosition(prev => new Vector3(prev[0] + speed, prev[1], prev[2]))
     camera.position.set(position[0], position[1] + 5, position[2] + 10)
     camera.lookAt(position[0], position[1], position[2])
   })
