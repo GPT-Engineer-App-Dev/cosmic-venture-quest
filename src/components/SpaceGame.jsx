@@ -83,15 +83,32 @@ function PlayerSpaceship() {
       scene.add(laser)
     }
 
-    lasers.current = lasers.current.filter(laser => laser.position.z > -100)
+    // Update and remove lasers
+    lasers.current = lasers.current.filter(laser => {
+      if (laser.position.z > -100) {
+        return true
+      } else {
+        scene.remove(laser)
+        return false
+      }
+    })
 
     // Check for collisions
     scene.children.forEach(child => {
-      if (child.type === 'Mesh' && child.geometry.type === 'SphereGeometry' && child !== laser) {
+      if (child.type === 'Mesh' && child.geometry.type === 'SphereGeometry') {
         const distance = newPosition.distanceTo(child.position)
         if (distance < 1) {
           scene.remove(child)
         }
+        
+        // Check laser collisions
+        lasers.current.forEach(laser => {
+          const laserDistance = laser.position.distanceTo(child.position)
+          if (laserDistance < 1) {
+            scene.remove(child)
+            scene.remove(laser)
+          }
+        })
       }
     })
   })
