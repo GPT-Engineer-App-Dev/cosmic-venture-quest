@@ -4,7 +4,7 @@ import SpaceGame from '../components/SpaceGame'
 
 const Index = () => {
   return (
-    <div className="w-screen h-screen overflow-hidden">
+    <div className="w-screen h-screen overflow-hidden bg-[#000010]">
       <SpaceGame />
     </div>
   );

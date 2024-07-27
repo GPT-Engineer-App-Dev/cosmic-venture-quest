@@ -201,7 +201,7 @@ function Particles({ count = 5000 }) {
 
 export default function SpaceGame() {
   return (
-    <Canvas camera={{ position: [0, 5, 10] }}>
+    <Canvas camera={{ position: [0, 5, 10] }} style={{ background: '#000010' }}>
       <color attach="background" args={['#000010']} />
       <fog attach="fog" args={['#000010', 100, 500]} />
       <ambientLight intensity={0.2} />
