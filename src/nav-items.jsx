@@ -12,8 +12,8 @@ export const navItems = [
     page: <Index />,
   },
   {
-    title: "Space Game",
-    to: "/space-game",
+    title: "Cosmic Voyager",
+    to: "/cosmic-voyager",
     icon: <Rocket className="h-4 w-4" />,
     page: <Index />,
   },
