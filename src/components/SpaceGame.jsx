@@ -170,17 +170,15 @@ function Particles({ count = 1000 }) {
 
 export default function SpaceGame() {
   return (
-    <div className="w-screen h-screen overflow-hidden">
-      <Canvas camera={{ position: [0, 5, 10] }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
-        <PlayerSpaceship />
-        <Planet position={[-20, 0, -50]} color="red" size={5} />
-        <Planet position={[30, 10, -80]} color="blue" size={3} />
-        <SpaceStation position={[50, 0, -100]} />
-        <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
-        <Particles />
-      </Canvas>
-    </div>
+    <Canvas camera={{ position: [0, 5, 10] }}>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      <PlayerSpaceship />
+      <Planet position={[-20, 0, -50]} color="red" size={5} />
+      <Planet position={[30, 10, -80]} color="blue" size={3} />
+      <SpaceStation position={[50, 0, -100]} />
+      <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
+      <Particles />
+    </Canvas>
   )
 }
