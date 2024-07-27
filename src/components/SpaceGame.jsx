@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Stars, Text } from '@react-three/drei'
-import { Vector3 } from 'three'
+import { OrbitControls, Stars, Text, useTexture } from '@react-three/drei'
+import { Vector3, AdditiveBlending } from 'three'
 
 function Spaceship({ position, rotation }) {
   const meshRef = useRef()
@@ -33,11 +33,12 @@ function Planet({ position, color, size }) {
   )
 }
 
-function PlayerSpaceship() {
+function PlayerSpaceship({ setPoints }) {
   const [position, setPosition] = useState(new Vector3(0, 0, 0))
-  const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false })
+  const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false, shoot: false })
   const speed = 0.1
-  const { camera } = useThree()
+  const { scene, camera } = useThree()
+  const lasers = useRef([])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -45,6 +46,7 @@ function PlayerSpaceship() {
       if (event.key === 'ArrowDown') setKeys((keys) => ({ ...keys, backward: true }))
       if (event.key === 'ArrowLeft') setKeys((keys) => ({ ...keys, left: true }))
       if (event.key === 'ArrowRight') setKeys((keys) => ({ ...keys, right: true }))
+      if (event.key === ' ') setKeys((keys) => ({ ...keys, shoot: true }))
     }
 
     const handleKeyUp = (event) => {
@@ -52,6 +54,7 @@ function PlayerSpaceship() {
       if (event.key === 'ArrowDown') setKeys((keys) => ({ ...keys, backward: false }))
       if (event.key === 'ArrowLeft') setKeys((keys) => ({ ...keys, left: false }))
       if (event.key === 'ArrowRight') setKeys((keys) => ({ ...keys, right: false }))
+      if (event.key === ' ') setKeys((keys) => ({ ...keys, shoot: false }))
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -73,9 +76,48 @@ function PlayerSpaceship() {
 
     camera.position.set(newPosition.x, newPosition.y + 5, newPosition.z + 10)
     camera.lookAt(newPosition.x, newPosition.y, newPosition.z)
+
+    if (keys.shoot) {
+      const laser = <Laser position={newPosition.clone()} direction={new Vector3(0, 0, -1)} />
+      lasers.current.push(laser)
+      scene.add(laser)
+    }
+
+    lasers.current = lasers.current.filter(laser => laser.position.z > -100)
+
+    // Check for collisions and update points
+    scene.children.forEach(child => {
+      if (child.type === 'Mesh' && child.geometry.type === 'SphereGeometry' && child !== laser) {
+        const distance = newPosition.distanceTo(child.position)
+        if (distance < 1) {
+          setPoints(points => points + 10)
+          scene.remove(child)
+        }
+      }
+    })
   })
 
   return <Spaceship position={position} rotation={[0, Math.PI, 0]} />
+}
+
+function Laser({ position, direction }) {
+  const ref = useRef()
+
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.position.add(direction.multiplyScalar(0.5))
+      if (ref.current.position.z < -100) {
+        ref.current.removeFromParent()
+      }
+    }
+  })
+
+  return (
+    <mesh ref={ref} position={position}>
+      <sphereGeometry args={[0.1, 8, 8]} />
+      <meshBasicMaterial color="red" />
+    </mesh>
+  )
 }
 
 function SpaceStation({ position }) {
@@ -101,24 +143,56 @@ function SpaceStation({ position }) {
   )
 }
 
+function Particles({ count = 1000 }) {
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 100
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 100
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 100
+    }
+    return pos
+  }, [count])
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute
+          attachObject={['attributes', 'position']}
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial size={0.1} color="white" transparent opacity={0.8} />
+    </points>
+  )
+}
+
 export default function SpaceGame() {
+  const [points, setPoints] = useState(0)
+
   return (
     <div className="w-full h-screen">
       <Canvas camera={{ position: [0, 5, 10] }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <PlayerSpaceship />
+        <PlayerSpaceship setPoints={setPoints} />
         <Planet position={[-20, 0, -50]} color="red" size={5} />
         <Planet position={[30, 10, -80]} color="blue" size={3} />
         <SpaceStation position={[50, 0, -100]} />
         <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
+        <Particles />
         <OrbitControls />
         <Text position={[0, 20, -50]} color="white" fontSize={5}>
           Welcome to Space!
         </Text>
       </Canvas>
+      <div className="absolute top-5 left-5 text-white bg-black bg-opacity-50 p-2 rounded">
+        Points: {points}
+      </div>
       <div className="absolute bottom-5 left-5 text-white bg-black bg-opacity-50 p-2 rounded">
-        Use arrow keys to move the spaceship
+        Use arrow keys to move the spaceship, space to shoot
       </div>
     </div>
   )
