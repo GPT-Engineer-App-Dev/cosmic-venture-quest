@@ -1,10 +1,9 @@
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Stars, Text, useGLTF } from '@react-three/drei'
+import { OrbitControls, Stars, Text } from '@react-three/drei'
 import { Vector3 } from 'three'
 
 function Spaceship({ position, rotation }) {
-  const { nodes, materials } = useGLTF('/spaceship.glb')
   const meshRef = useRef()
 
   useFrame((state) => {
@@ -13,7 +12,14 @@ function Spaceship({ position, rotation }) {
 
   return (
     <group ref={meshRef} position={position} rotation={rotation}>
-      <mesh geometry={nodes.Spaceship.geometry} material={materials.SpaceshipMaterial} />
+      <mesh>
+        <coneGeometry args={[1, 2, 8]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      <mesh position={[0, 1, 0]}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color="lightblue" />
+      </mesh>
     </group>
   )
 }
@@ -45,10 +51,24 @@ function PlayerSpaceship() {
 }
 
 function SpaceStation({ position }) {
-  const { nodes, materials } = useGLTF('/space_station.glb')
   return (
     <group position={position}>
-      <mesh geometry={nodes.SpaceStation.geometry} material={materials.SpaceStationMaterial} />
+      <mesh>
+        <boxGeometry args={[4, 1, 1]} />
+        <meshStandardMaterial color="gray" />
+      </mesh>
+      <mesh position={[0, 1, 0]}>
+        <cylinderGeometry args={[0.5, 0.5, 2, 16]} />
+        <meshStandardMaterial color="silver" />
+      </mesh>
+      <mesh position={[2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+        <meshStandardMaterial color="gold" />
+      </mesh>
+      <mesh position={[-2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+        <meshStandardMaterial color="gold" />
+      </mesh>
     </group>
   )
 }
@@ -75,6 +95,3 @@ export default function SpaceGame() {
     </div>
   )
 }
-
-useGLTF.preload('/spaceship.glb')
-useGLTF.preload('/space_station.glb')
