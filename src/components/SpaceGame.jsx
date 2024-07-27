@@ -16,10 +16,29 @@ function HUD({ points, health, level }) {
 
 function Spaceship({ position, rotation }) {
   const meshRef = useRef()
+  const [lasers, setLasers] = useState([])
 
   useFrame((state) => {
     meshRef.current.rotation.y += 0.01
+    
+    // Update laser positions
+    setLasers(prevLasers => 
+      prevLasers.map(laser => ({ ...laser, position: laser.position.add(new Vector3(0, 0, -1)) }))
+        .filter(laser => laser.position.z > -100)
+    )
   })
+
+  const shootLaser = () => {
+    setLasers(prevLasers => [...prevLasers, { position: new Vector3(position.x, position.y, position.z) }])
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space') shootLaser()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <group ref={meshRef} position={position} rotation={rotation}>
@@ -31,6 +50,20 @@ function Spaceship({ position, rotation }) {
         <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial color="lightblue" />
       </mesh>
+      <Points>
+        <pointsMaterial size={0.1} color="orange" />
+        <Float speed={5} floatIntensity={2}>
+          {Array.from({ length: 20 }).map((_, i) => (
+            <point key={i} position={[Math.random() - 0.5, Math.random() - 0.5, -2]} />
+          ))}
+        </Float>
+      </Points>
+      {lasers.map((laser, index) => (
+        <mesh key={index} position={laser.position}>
+          <sphereGeometry args={[0.1, 8, 8]} />
+          <meshBasicMaterial color="red" />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -43,9 +76,22 @@ function Planet({ position, color, size }) {
     const context = canvas.getContext('2d');
     const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
     gradient.addColorStop(0, color);
+    gradient.addColorStop(0.5, color);
     gradient.addColorStop(1, 'black');
     context.fillStyle = gradient;
     context.fillRect(0, 0, 256, 256);
+    
+    // Add some noise
+    for (let i = 0; i < 1000; i++) {
+      const x = Math.random() * 256;
+      const y = Math.random() * 256;
+      const radius = Math.random() * 2;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.2})`;
+      context.fill();
+    }
+    
     return new THREE.CanvasTexture(canvas);
   }, [color]);
 
@@ -53,8 +99,39 @@ function Planet({ position, color, size }) {
     <mesh position={position}>
       <sphereGeometry args={[size, 64, 64]} />
       <meshStandardMaterial map={texture} />
+      <Particles count={100} color={color} size={size} />
     </mesh>
   )
+}
+
+function Particles({ count, color, size }) {
+  const [positions, colors] = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos((Math.random() * 2) - 1);
+      const r = size + (Math.random() * 0.2);
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
+      const particleColor = new THREE.Color(color);
+      colors[i * 3] = particleColor.r;
+      colors[i * 3 + 1] = particleColor.g;
+      colors[i * 3 + 2] = particleColor.b;
+    }
+    return [positions, colors];
+  }, [count, color, size]);
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attachObject={['attributes', 'position']} count={count} array={positions} itemSize={3} />
+        <bufferAttribute attachObject={['attributes', 'color']} count={count} array={colors} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial size={0.05} vertexColors />
+    </points>
+  );
 }
 
 function PlayerSpaceship() {
@@ -157,6 +234,29 @@ function Laser({ position, direction }) {
       <sphereGeometry args={[0.1, 8, 8]} />
       <meshBasicMaterial color="red" />
     </mesh>
+  )
+}
+
+function SpaceStation({ position }) {
+  return (
+    <group position={position}>
+      <mesh>
+        <boxGeometry args={[4, 1, 1]} />
+        <meshStandardMaterial color="gray" />
+      </mesh>
+      <mesh position={[0, 1, 0]}>
+        <cylinderGeometry args={[0.5, 0.5, 2, 16]} />
+        <meshStandardMaterial color="silver" />
+      </mesh>
+      <mesh position={[2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+        <meshStandardMaterial color="gold" />
+      </mesh>
+      <mesh position={[-2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+        <meshStandardMaterial color="gold" />
+      </mesh>
+    </group>
   )
 }
 
