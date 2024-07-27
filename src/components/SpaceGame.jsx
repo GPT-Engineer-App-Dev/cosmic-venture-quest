@@ -34,7 +34,7 @@ function Planet({ position, color, size }) {
 }
 
 function PlayerSpaceship() {
-  const [position, setPosition] = useState([0, 0, 0])
+  const [position, setPosition] = useState(new Vector3(0, 0, 0))
   const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false })
   const speed = 0.1
   const { camera } = useThree()
@@ -64,12 +64,15 @@ function PlayerSpaceship() {
   }, [])
 
   useFrame(() => {
-    if (keys.forward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] - speed))
-    if (keys.backward) setPosition(prev => new Vector3(prev[0], prev[1], prev[2] + speed))
-    if (keys.left) setPosition(prev => new Vector3(prev[0] - speed, prev[1], prev[2]))
-    if (keys.right) setPosition(prev => new Vector3(prev[0] + speed, prev[1], prev[2]))
-    camera.position.set(position[0], position[1] + 5, position[2] + 10)
-    camera.lookAt(position[0], position[1], position[2])
+    const newPosition = position.clone()
+    if (keys.forward) newPosition.z -= speed
+    if (keys.backward) newPosition.z += speed
+    if (keys.left) newPosition.x -= speed
+    if (keys.right) newPosition.x += speed
+    setPosition(newPosition)
+
+    camera.position.set(newPosition.x, newPosition.y + 5, newPosition.z + 10)
+    camera.lookAt(newPosition.x, newPosition.y, newPosition.z)
   })
 
   return <Spaceship position={position} rotation={[0, Math.PI, 0]} />
