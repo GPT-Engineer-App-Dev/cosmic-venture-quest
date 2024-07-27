@@ -4,6 +4,16 @@ import { Stars } from '@react-three/drei'
 import { Vector3 } from 'three'
 import * as THREE from 'three'
 
+function HUD({ points, health, level }) {
+  return (
+    <div className="absolute top-0 left-0 p-4 text-white font-bold text-xl">
+      <div>Points: {points}</div>
+      <div>Health: {health}</div>
+      <div>Level: {level}</div>
+    </div>
+  )
+}
+
 function Spaceship({ position, rotation }) {
   const meshRef = useRef()
 
@@ -212,20 +222,40 @@ function Particles({ count = 5000 }) {
 }
 
 export default function SpaceGame() {
+  const [gameState, setGameState] = useState({
+    points: 0,
+    health: 100,
+    level: 1
+  })
+
+  useEffect(() => {
+    const gameLoop = setInterval(() => {
+      setGameState(prevState => ({
+        ...prevState,
+        points: prevState.points + 1
+      }))
+    }, 1000)
+
+    return () => clearInterval(gameLoop)
+  }, [])
+
   return (
-    <Canvas camera={{ position: [0, 5, 10] }} style={{ background: '#000010' }}>
-      <color attach="background" args={['#000010']} />
-      <fog attach="fog" args={['#000010', 100, 500]} />
-      <ambientLight intensity={0.2} />
-      <pointLight position={[10, 10, 10]} intensity={0.8} />
-      <PlayerSpaceship />
-      <Planet position={[-20, 0, -50]} color="#ff4400" size={5} />
-      <Planet position={[30, 10, -80]} color="#00aaff" size={3} />
-      <Planet position={[-40, -5, -120]} color="#ffaa00" size={8} />
-      <Planet position={[60, 20, -150]} color="#00ff88" size={4} />
-      <SpaceStation position={[50, 0, -100]} />
-      <Stars radius={300} depth={60} count={50000} factor={7} saturation={0} fade speed={1} />
-      <Particles />
-    </Canvas>
+    <div className="relative w-full h-full">
+      <Canvas camera={{ position: [0, 5, 10] }} style={{ background: '#000010' }}>
+        <color attach="background" args={['#000010']} />
+        <fog attach="fog" args={['#000010', 100, 500]} />
+        <ambientLight intensity={0.2} />
+        <pointLight position={[10, 10, 10]} intensity={0.8} />
+        <PlayerSpaceship />
+        <Planet position={[-20, 0, -50]} color="#ff4400" size={5} />
+        <Planet position={[30, 10, -80]} color="#00aaff" size={3} />
+        <Planet position={[-40, -5, -120]} color="#ffaa00" size={8} />
+        <Planet position={[60, 20, -150]} color="#00ff88" size={4} />
+        <SpaceStation position={[50, 0, -100]} />
+        <Stars radius={300} depth={60} count={50000} factor={7} saturation={0} fade speed={1} />
+        <Particles />
+      </Canvas>
+      <HUD points={gameState.points} health={gameState.health} level={gameState.level} />
+    </div>
   )
 }
