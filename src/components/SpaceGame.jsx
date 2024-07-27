@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Stars } from '@react-three/drei'
-import { Vector3 } from 'three'
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
+import { Stars, useTexture } from '@react-three/drei'
+import { Vector3, TextureLoader } from 'three'
+import * as THREE from 'three'
 
 function Spaceship({ position, rotation }) {
   const meshRef = useRef()
@@ -25,10 +26,11 @@ function Spaceship({ position, rotation }) {
 }
 
 function Planet({ position, color, size }) {
+  const texture = useTexture('/planet_texture.jpg')
   return (
     <mesh position={position}>
-      <sphereGeometry args={[size, 32, 32]} />
-      <meshStandardMaterial color={color} />
+      <sphereGeometry args={[size, 64, 64]} />
+      <meshStandardMaterial map={texture} color={color} />
     </mesh>
   )
 }
@@ -159,15 +161,21 @@ function SpaceStation({ position }) {
   )
 }
 
-function Particles({ count = 1000 }) {
-  const positions = useMemo(() => {
-    const pos = new Float32Array(count * 3)
+function Particles({ count = 5000 }) {
+  const [positions, colors] = useMemo(() => {
+    const positions = new Float32Array(count * 3)
+    const colors = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 100
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 100
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 100
+      positions[i * 3] = (Math.random() - 0.5) * 300
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 300
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 300
+      const color = new THREE.Color()
+      color.setHSL(Math.random(), 0.7, 0.9)
+      colors[i * 3] = color.r
+      colors[i * 3 + 1] = color.g
+      colors[i * 3 + 2] = color.b
     }
-    return pos
+    return [positions, colors]
   }, [count])
 
   return (
@@ -179,8 +187,14 @@ function Particles({ count = 1000 }) {
           array={positions}
           itemSize={3}
         />
+        <bufferAttribute
+          attachObject={['attributes', 'color']}
+          count={colors.length / 3}
+          array={colors}
+          itemSize={3}
+        />
       </bufferGeometry>
-      <pointsMaterial size={0.1} color="white" transparent opacity={0.8} />
+      <pointsMaterial size={0.5} vertexColors />
     </points>
   )
 }
@@ -188,13 +202,17 @@ function Particles({ count = 1000 }) {
 export default function SpaceGame() {
   return (
     <Canvas camera={{ position: [0, 5, 10] }}>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
+      <color attach="background" args={['#000010']} />
+      <fog attach="fog" args={['#000010', 100, 500]} />
+      <ambientLight intensity={0.2} />
+      <pointLight position={[10, 10, 10]} intensity={0.8} />
       <PlayerSpaceship />
-      <Planet position={[-20, 0, -50]} color="red" size={5} />
-      <Planet position={[30, 10, -80]} color="blue" size={3} />
+      <Planet position={[-20, 0, -50]} color="#ff4400" size={5} />
+      <Planet position={[30, 10, -80]} color="#00aaff" size={3} />
+      <Planet position={[-40, -5, -120]} color="#ffaa00" size={8} />
+      <Planet position={[60, 20, -150]} color="#00ff88" size={4} />
       <SpaceStation position={[50, 0, -100]} />
-      <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
+      <Stars radius={300} depth={60} count={50000} factor={7} saturation={0} fade speed={1} />
       <Particles />
     </Canvas>
   )
