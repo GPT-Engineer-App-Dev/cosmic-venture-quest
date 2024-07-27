@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Stars } from '@react-three/drei'
+import { Stars, Float, Points } from '@react-three/drei'
 import { Vector3 } from 'three'
 import * as THREE from 'three'
 
@@ -275,24 +275,38 @@ function SpaceStation({ position }) {
 }
 
 function SpaceStation({ position }) {
+  const [rotation, setRotation] = useState(0)
+
+  useFrame((state, delta) => {
+    setRotation(rotation => rotation + delta * 0.1)
+  })
+
   return (
     <group position={position}>
-      <mesh>
+      <mesh rotation={[0, rotation, 0]}>
         <boxGeometry args={[4, 1, 1]} />
         <meshStandardMaterial color="gray" />
       </mesh>
-      <mesh position={[0, 1, 0]}>
+      <mesh position={[0, 1, 0]} rotation={[0, rotation, 0]}>
         <cylinderGeometry args={[0.5, 0.5, 2, 16]} />
         <meshStandardMaterial color="silver" />
       </mesh>
-      <mesh position={[2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[2, 0, 0]} rotation={[0, rotation, Math.PI / 2]}>
         <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
         <meshStandardMaterial color="gold" />
       </mesh>
-      <mesh position={[-2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[-2, 0, 0]} rotation={[0, rotation, Math.PI / 2]}>
         <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
         <meshStandardMaterial color="gold" />
       </mesh>
+      <Points>
+        <pointsMaterial size={0.05} color="cyan" />
+        <Float speed={2} floatIntensity={1}>
+          {Array.from({ length: 50 }).map((_, i) => (
+            <point key={i} position={[(Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5]} />
+          ))}
+        </Float>
+      </Points>
     </group>
   )
 }
