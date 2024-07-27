@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Stars, Text, useTexture } from '@react-three/drei'
-import { Vector3, AdditiveBlending } from 'three'
+import { Stars } from '@react-three/drei'
+import { Vector3 } from 'three'
 
 function Spaceship({ position, rotation }) {
   const meshRef = useRef()
@@ -33,7 +33,7 @@ function Planet({ position, color, size }) {
   )
 }
 
-function PlayerSpaceship({ setPoints }) {
+function PlayerSpaceship() {
   const [position, setPosition] = useState(new Vector3(0, 0, 0))
   const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false, shoot: false })
   const speed = 0.1
@@ -85,12 +85,11 @@ function PlayerSpaceship({ setPoints }) {
 
     lasers.current = lasers.current.filter(laser => laser.position.z > -100)
 
-    // Check for collisions and update points
+    // Check for collisions
     scene.children.forEach(child => {
       if (child.type === 'Mesh' && child.geometry.type === 'SphereGeometry' && child !== laser) {
         const distance = newPosition.distanceTo(child.position)
         if (distance < 1) {
-          setPoints(points => points + 10)
           scene.remove(child)
         }
       }
@@ -170,30 +169,18 @@ function Particles({ count = 1000 }) {
 }
 
 export default function SpaceGame() {
-  const [points, setPoints] = useState(0)
-
   return (
-    <div className="w-full h-screen">
+    <div className="w-screen h-screen overflow-hidden">
       <Canvas camera={{ position: [0, 5, 10] }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <PlayerSpaceship setPoints={setPoints} />
+        <PlayerSpaceship />
         <Planet position={[-20, 0, -50]} color="red" size={5} />
         <Planet position={[30, 10, -80]} color="blue" size={3} />
         <SpaceStation position={[50, 0, -100]} />
         <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
         <Particles />
-        <OrbitControls />
-        <Text position={[0, 20, -50]} color="white" fontSize={5}>
-          Welcome to Space!
-        </Text>
       </Canvas>
-      <div className="absolute top-5 left-5 text-white bg-black bg-opacity-50 p-2 rounded">
-        Points: {points}
-      </div>
-      <div className="absolute bottom-5 left-5 text-white bg-black bg-opacity-50 p-2 rounded">
-        Use arrow keys to move the spaceship, space to shoot
-      </div>
     </div>
   )
 }
